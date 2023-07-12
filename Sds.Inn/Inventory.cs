@@ -1,80 +1,13 @@
 ﻿namespace Sds.Inn;
 
-class Inventory
+public class Inventory
 {
-    void UpdateQuality()
-    {
-        for (var i = 0; i < Items.Count; i++)
-        {
-            if (Items[i].Name != "Aged Brie" && Items[i].Name != "Backstage Passes")
-            {
-                if (Items[i].Quality > 0)
-                {
-                    if (Items[i].Name != "Sulfuras")
-                    {
-                        Items[i].Quality = Items[i].Quality - 1;
-                    }
-                }
-            }
-            else
-            {
-                if (Items[i].Quality < 50)
-                {
-                    Items[i].Quality = Items[i].Quality + 1;
-                    if (Items[i].Name == "Backstage Passes")
-                    {
-                        if (Items[i].SellIn < 11)
-                        {
-                            if (Items[i].Quality < 50)
-                            {
-                                Items[i].Quality = Items[i].Quality + 1;
-                            }
-                        }
-                        if (Items[i].SellIn < 6)
-                        {
-                            if (Items[i].Quality < 50)
-                            {
-                                Items[i].Quality = Items[i].Quality + 1;
-                            }
-                        }
-                    }
-                }
-            }
-            if (Items[i].Name != "Sulfuras")
-            {
-                Items[i].SellIn = Items[i].SellIn - 1;
-            }
-            if (Items[i].SellIn < 0)
-            {
-                if (Items[i].Name != "Aged Brie")
-                {
-                    if (Items[i].Name != "Backstage passes")
-                    {
-                        if (Items[i].Quality > 0)
-                        {
-                            if (Items[i].Name != "Sulfuras")
-                            {
-                                Items[i].Quality = Items[i].Quality - 1;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Items[i].Quality = Items[i].Quality - Items[i].Quality;
-                    }
-                }
-                else
-                {
-                    if (Items[i].Quality < 50)
-                    {
-                        Items[i].Quality = Items[i].Quality + 1;
-                    }
-                }
-            }
-        }
-    }
 
-    IList<Item> Items = new List<Item>
+ IList<Item> Items { get; }
+
+public Inventory()
+{        
+    Items = new List<Item>
     {
         new Item { Name = "+5 Dexterity Vest", SellIn = 10, Quality = 20 },
         new Item { Name = "Aged Brie", SellIn = 2, Quality = 0 },
@@ -85,6 +18,65 @@ class Inventory
     };
 }
 
+
+     public   void UpdateQuality()
+        {
+            foreach (var item in Items)
+            {
+                // Skip legendary item "Sulfuras"
+                if (item.Name == "Sulfuras, Hand of Ragnaros")
+                    continue;
+
+                // Decrease Sell-In value for all items except "Sulfuras"
+                item.SellIn--;
+
+                // Update quality based on item type
+                if (item.Name == "Aged Brie")
+                {
+                    // Increase quality for "Aged Brie" as it ages
+                    item.Quality++;
+                }
+                else if (item.Name == "Backstage passes")
+                {
+                    // Increase quality for "Backstage passes"
+                    if (item.SellIn < 0)
+                        item.Quality = 0; // Quality drops to 0 after the concert
+                    else if (item.SellIn < 5)
+                        item.Quality += 3; // Quality increases by 3 when there are 5 days or less
+                    else if (item.SellIn < 10)
+                        item.Quality += 2; // Quality increases by 2 when there are 10 days or less
+                    else
+                        item.Quality++; // Quality increases by 1 for other days
+                }
+                else if (item.Name.StartsWith("Conjured"))
+                {
+                    // Degrade quality twice as fast for "Conjured" items
+                    item.Quality -= 2;
+                }
+                else
+                {
+                    // Degrade quality for normal items
+                    item.Quality--;
+                }
+
+                // Ensure quality is within the valid range of 0 to 50
+                item.Quality = Math.Max(0, Math.Min(50, item.Quality));
+
+                // Decrease quality twice as fast after the Sell-In date has passed
+                if (item.SellIn < 0)
+                {
+                    if (item.Name != "Aged Brie" && !item.Name.StartsWith("Backstage passes"))
+                    {
+                        if (item.Name.StartsWith("Conjured"))
+                            item.Quality -= 2; // Degrade quality twice as fast for "Conjured" items after Sell-In date
+                        else
+                            item.Quality--;
+                    }
+                }
+            }
+        }
+    }
+}
 class Item
 {
     public string Name { get; set; }
